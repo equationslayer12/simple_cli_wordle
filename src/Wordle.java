@@ -9,14 +9,16 @@ public class Wordle {
 
     public void play() {
         String targetWord = chooseRandomWord();
-        
+
         this.keyboard = new Keyboard();
         this.guesses = new Guess[numberOfGuesses];
 
         Cli cli = new Cli(guesses, keyboard);
         Scanner scan = new Scanner(System.in);
-
+        boolean hasWon = false;
         for (int guessIndex = 0; guessIndex < numberOfGuesses; guessIndex++) {
+            if (hasWon)
+                break;
             cli.render();
             String input = "";
             while (input.length() != 5) {
@@ -26,11 +28,74 @@ public class Wordle {
             for (int letterIndex = 0; letterIndex < input.length(); letterIndex++) {
                 char letter = input.charAt(letterIndex);
                 LetterStatus letterStatus = getLetterStatus(letter, letterIndex, targetWord);
+                switch (letterStatus) {
+                    case correct -> guess.correctCount++;
+                    case wrong -> guess.wrongCount++;
+                    case wrongPosition -> guess.wrongPositionCount++;
+                }
+
                 guess.letters[letterIndex] = new Letter(letter, letterStatus);
                 keyboard.updateLetter(letter, letterStatus);
+                if (guess.correctCount == input.length())
+                    hasWon = true;
             }
-            this.guesses[guessIndex] = guess; 
+
+            // correct all the wrong positions by looping backwards. makes sense right?
+            for (int letterIndex = input.length() - 1; letterIndex >= 0; letterIndex--) {
+                Letter letter = guess.letters[letterIndex];
+                if (letter.status != LetterStatus.wrongPosition)
+                    continue;
+                if (countLetterOccurances(letter.letter, targetWord)
+                        - (countLetterWrongPosition(letter.letter, guess) - 1)  // -1 because we're not including ourselves
+                        - countLetterCorrect(letter.letter, guess) <= 0) {
+                    letter.status = LetterStatus.wrong;
+                    guess.wrongCount++;
+                    guess.wrongPositionCount--;
+                }
+            }
+            this.guesses[guessIndex] = guess;
         }
+
+        cli.render();
+        if (hasWon)
+            System.out.println("Formal congratulations.");
+    }
+
+    private int countLetterWrong(char letter, Guess guess) {
+        int count = 0;
+        for (Letter guessLetter : guess.letters) {
+            if (guessLetter.status == LetterStatus.wrong && letter == guessLetter.letter)
+                count++;
+        }
+        return count;
+    }
+
+    private int countLetterCorrect(char letter, Guess guess) {
+        int count = 0;
+        for (Letter guessLetter : guess.letters) {
+            if (guessLetter.status == LetterStatus.correct && letter == guessLetter.letter)
+                count++;
+        }
+        return count;
+    }
+
+
+    private int countLetterWrongPosition(char letter, Guess guess) {
+        int count = 0;
+        for (Letter guessLetter : guess.letters) {
+            if (guessLetter.status == LetterStatus.wrongPosition && letter == guessLetter.letter)
+                count++;
+        }
+        return count;
+    }
+
+    private int countLetterOccurances(char letter, String string) {
+        int count = 0;
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) == letter)
+                count++;
+        }
+        return count;
     }
 
     private LetterStatus getLetterStatus(char letter, int letterIndex, String targetWord) {
