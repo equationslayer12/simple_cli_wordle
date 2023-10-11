@@ -25,7 +25,7 @@ public class Wordle {
             Guess guess = new Guess(new Letter[input.length()]);
             for (int letterIndex = 0; letterIndex < input.length(); letterIndex++) {
                 char letter = input.charAt(letterIndex);
-                LetterStatus letterStatus = getLetterStatus(letter, targetWord);
+                LetterStatus letterStatus = getLetterStatus(letter, letterIndex, targetWord);
                 guess.letters[letterIndex] = new Letter(letter, letterStatus);
                 keyboard.updateLetter(letter, letterStatus);
             }
@@ -33,11 +33,11 @@ public class Wordle {
         }
     }
 
-    private LetterStatus getLetterStatus(char letter, String targetWord) {
+    private LetterStatus getLetterStatus(char letter, int letterIndex, String targetWord) {
         if (letterIsWrong(letter, targetWord))
             return LetterStatus.wrong;
 
-        else if (letterIsCorrect(letter, targetWord))
+        else if (letterIsCorrect(letter, letterIndex, targetWord))
             return LetterStatus.correct;
 
         else
@@ -53,12 +53,8 @@ public class Wordle {
         return true;
     }
 
-    private boolean letterIsCorrect(char letter, String targetWord) {
-        for (int letterIndex = 0; letterIndex < targetWord.length(); letterIndex++) {
-            if (letter == targetWord.charAt(letterIndex))
-                return true;
-        }
-        return false;
+    private boolean letterIsCorrect(char letter, int letterIndex, String targetWord) {
+        return letter == targetWord.charAt(letterIndex);
     }
 
 
