@@ -29,6 +29,7 @@ public class Wordle {
                 guess.letters[letterIndex] = new Letter(letter, letterStatus);
                 keyboard.updateLetter(letter, letterStatus);
             }
+            this.guesses[guessIndex] = guess; 
         }
     }
 
@@ -65,3 +66,4 @@ public class Wordle {
         return "SONIC";
     }
 }
+
